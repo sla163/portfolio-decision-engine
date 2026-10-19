@@ -1,0 +1,28 @@
+# ÖRNEK DEĞERLER - hedef ve sınırları kendi risk toleransına göre değiştir.
+aylik_ekleme_tl: 3000
+
+siniflar:            # yüzde olarak
+  bist_katilim:   {hedef: 35, min: 20, max: 45}
+  abd_hisse_etf:  {hedef: 15, min: 10, max: 30}
+  kiymetli_maden: {hedef: 30, min: 20, max: 40}
+  doviz:          {hedef: 20, min: 10, max: 25}
+
+tek_enstruman_max: 30        # başlangıç; zamanla düşür (örn. 15)
+
+komisyon:
+  bist_yuzde: 0.2            # Ziraat/Info güncel tarifene göre DEĞİŞTİR
+  abd_min_usd: 10            # Info Globe: lot başı 0.03 USD, min 10 USD (teyit et)
+  abd_lot_basi_usd: 0.03
+  esik_yuzde: 1.5            # bunu aşan alım ertelenir
+
+satis_kurallari:
+  gerekli_sinyal_sayisi: 2
+  teyit_bekleme_gun: 14      # sinyal en az bu kadar gündür sürmeli
+  min_islem_degeri_tl: 500   # altı için satış önerilmez, sadece not düşülür
+  max_komisyon_yuzde: 2
+  trend:           true      # fiyat < MA200 ve MA50 < MA200
+  goreli_zayiflik_yuzde: 15  # 6 ayda benchmark'a göre bu kadar geride
+  tepe_dusus_yuzde: 25       # 12 ay zirvesinden düşüş
+  benchmark: "XU100.IS"      # katılım endeksi sembolünü bulursan onunla değiştir
+
+usdtry_sembol: "USDTRY=X"
