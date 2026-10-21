@@ -1,0 +1,15 @@
+- sembol: THYAO
+  sinif: bist_katilim
+  adet: 10
+  maliyet: 300.0
+  para: TRY
+- sembol: BIMAS
+  sinif: bist_katilim
+  adet: 5
+  maliyet: 450.0
+  para: TRY
+- sembol: NAKIT_TRY
+  sinif: nakit_para
+  adet: 5000.0
+  maliyet: 1.0
+  para: TRY

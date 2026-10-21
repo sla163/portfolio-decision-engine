@@ -1,0 +1,35 @@
+name: Gunluk Faizsiz Portfoy Bulteni
+
+on:
+  schedule:
+    # UTC 05:30 -> TSİ (UTC+3) 08:30
+    - cron: '30 5 * * *'
+  workflow_dispatch: # GitHub arayüzünden manuel "Run workflow" butonuyla tetikleyebilmek için
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Kodları Depodan Çek
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 Kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Bağımlılıkları Yükle
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Bülteni Oluştur ve Gönder
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python main.py
+

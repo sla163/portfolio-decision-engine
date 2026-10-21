@@ -1,0 +1,26 @@
+name: Guncel Portfoy Analizini Onbellekle
+
+on:
+  schedule:
+    # Pazartesi - Cuma 18:30 TSI (15:30 UTC)
+    - cron: '30 15 * * 1-5'
+  workflow_dispatch: # İhtiyaç anında elle çalıştırmak için
+
+jobs:
+  cache_report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - run: pip install requests pyyaml yfinance pandas
+
+      - name: Analizi Yap ve KV'ye Yaz
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          PORTFOLIO_API_URL: "https://old-sunset-889b.slausta163.workers.dev"
+        run: python cache_reporter.py
