@@ -19,8 +19,16 @@ jobs:
 
       - run: pip install requests pyyaml yfinance pandas
 
+      - name: Portföy API yapılandırmasını doğrula
+        env:
+          PORTFOLIO_API_TOKEN: ${{ secrets.PORTFOLIO_API_TOKEN }}
+          PORTFOLIO_API_URL: ${{ vars.PORTFOLIO_API_URL }}
+        run: |
+          test -n "$PORTFOLIO_API_TOKEN"
+          test -n "$PORTFOLIO_API_URL"
+
       - name: Analizi Yap ve KV'ye Yaz
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          PORTFOLIO_API_URL: "https://old-sunset-889b.slausta163.workers.dev"
+          PORTFOLIO_API_TOKEN: ${{ secrets.PORTFOLIO_API_TOKEN }}
+          PORTFOLIO_API_URL: ${{ vars.PORTFOLIO_API_URL }}
         run: python cache_reporter.py

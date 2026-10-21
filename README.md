@@ -48,6 +48,6 @@ An event-driven, zero-maintenance personal portfolio tracker and financial decis
 1. Copy `.env.example` to `.env` and supply your credentials:
    - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
    - `GEMINI_API_KEY`
-   - `PORTFOLIO_API_URL`
+   - `PORTFOLIO_API_URL`, `PORTFOLIO_API_TOKEN`
 2. Deploy the Worker using Cloudflare Dashboard or Wrangler CLI.
-3. Configure GitHub Repository Secrets with the same keys to activate automated background caching.
+3. Configure the GitHub repository variable `PORTFOLIO_API_URL` and the secrets `PORTFOLIO_API_TOKEN`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `GEMINI_API_KEY` to activate the scheduled workflows. The Worker API must accept the portfolio token as a Bearer token.

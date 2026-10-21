@@ -25,11 +25,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Portföy API yapılandırmasını doğrula
+        env:
+          PORTFOLIO_API_TOKEN: ${{ secrets.PORTFOLIO_API_TOKEN }}
+          PORTFOLIO_API_URL: ${{ vars.PORTFOLIO_API_URL }}
+        run: |
+          test -n "$PORTFOLIO_API_TOKEN"
+          test -n "$PORTFOLIO_API_URL"
+
       - name: Bülteni Oluştur ve Gönder
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PORTFOLIO_API_TOKEN: ${{ secrets.PORTFOLIO_API_TOKEN }}
+          PORTFOLIO_API_URL: ${{ vars.PORTFOLIO_API_URL }}
         run: |
           python main.py
-

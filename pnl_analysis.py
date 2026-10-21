@@ -1,15 +1,10 @@
-import os
-import yfinance as yf
-from portfolio_manager import get_holdings, get_live_usdtry
+from portfolio_manager import (
+    format_ticker,
+    get_holdings,
+    get_live_price,
+    get_live_usdtry,
+)
 
-def format_ticker(symbol: str, sinif: str) -> str:
-    """Sembolü Yahoo Finance formatına dönüştürür."""
-    sym = symbol.upper().strip()
-    if sym.startswith("NAKIT"):
-        return None
-    if "bist" in sinif.lower() or not "." in sym:
-        return f"{sym}.IS" if not sym.endswith(".IS") else sym
-    return sym
 
 def calculate_portfolio_pnl() -> str:
     holdings = get_holdings()
@@ -19,7 +14,7 @@ def calculate_portfolio_pnl() -> str:
     usd_try = get_live_usdtry()
     toplam_maliyet_try = 0.0
     toplam_guncel_try = 0.0
-    
+
     satirlar = ["📈 **PORTFÖY GÜNCEL KÂR / ZARAR DURUMU**\n"]
 
     for item in holdings:
@@ -29,7 +24,6 @@ def calculate_portfolio_pnl() -> str:
         para = (item.get("para") or item.get("para_birimi", "TRY")).upper()
         sinif = item.get("sinif", "")
 
-        # Nakit varlık kontrolü
         if sembol.startswith("NAKIT"):
             deger_try = adet if para == "TRY" else adet * usd_try
             toplam_maliyet_try += deger_try
@@ -37,17 +31,7 @@ def calculate_portfolio_pnl() -> str:
             satirlar.append(f"💵 `{sembol}`: {adet:,.2f} {para} (Nakit)")
             continue
 
-        ticker = format_ticker(sembol, sinif)
-        guncel_fiyat = maliyet  # Fallback
-
-        if ticker:
-            try:
-                data = yf.Ticker(ticker).history(period="1d")
-                if not data.empty:
-                    guncel_fiyat = float(data["Close"].iloc[-1])
-            except Exception:
-                pass
-
+        guncel_fiyat = get_live_price(sembol, sinif)
         varlik_maliyet = adet * maliyet
         varlik_guncel = adet * guncel_fiyat
         kar_zarar_tutari = varlik_guncel - varlik_maliyet
@@ -73,6 +57,7 @@ def calculate_portfolio_pnl() -> str:
     satirlar.append(f"Net Durum    : {toplam_isaret}{toplam_fark_try:,.2f} TRY (%{toplam_oran:+.2f})")
 
     return "\n".join(satirlar)
+
 
 if __name__ == "__main__":
     print(calculate_portfolio_pnl())
