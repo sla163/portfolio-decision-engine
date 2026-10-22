@@ -1,8 +1,7 @@
 # portfolio-decision-engine
-Event-driven, low-latency personal portfolio tracking and analytics bot using Cloudflare Workers, Cloudflare KV, Python, and Google Gemini.
-# Serverless Multi-Asset Portfolio Tracker & Decision Support Engine
+Public example of a personal portfolio tracking and analytics project using Cloudflare Workers, Cloudflare KV, Python, and Google Gemini.
 
-An event-driven, zero-maintenance personal portfolio tracker and financial decision support system built on a hybrid serverless architecture.
+This repository is a shareable, non-live version of a private project. It contains no credentials and does not work with a real portfolio until you configure your own private services and secrets. It is an example, not a production-ready financial product or investment advice.
 
 ## 🚀 Key Highlights & Architecture
 
@@ -45,9 +44,15 @@ An event-driven, zero-maintenance personal portfolio tracker and financial decis
 
 ## ⚙️ Setup & Configuration
 
-1. Copy `.env.example` to `.env` and supply your credentials:
-   - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
-   - `GEMINI_API_KEY`
-   - `PORTFOLIO_API_URL`, `PORTFOLIO_API_TOKEN`
-2. Deploy the Worker using Cloudflare Dashboard or Wrangler CLI.
-3. Configure the GitHub repository variable `PORTFOLIO_API_URL` and the secrets `PORTFOLIO_API_TOKEN`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `GEMINI_API_KEY` to activate the scheduled workflows. The Worker API must accept the portfolio token as a Bearer token.
+No credentials or live services are needed to browse this example. The scheduled GitHub Actions workflows are disabled unless the repository variable `ENABLE_LIVE_WORKFLOWS` is explicitly set to `true`.
+
+For private, personal use only:
+
+1. Copy `.env.example` to `.env` and fill in your own local credentials. Keep `.env` and `holdings.yaml` private; never commit real values or portfolio data.
+2. Copy `holdings.example.yml` to `holdings.yaml` and replace the sample entries with your own data. The real `holdings.yaml` is ignored by Git.
+3. Deploy `worker.js` from a private Worker project or paste it into your private Cloudflare Worker. Bind a KV namespace as `PORTFOLIO_STORE` and set the Worker secrets `PORTFOLIO_API_TOKEN`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `TELEGRAM_WEBHOOK_SECRET`. Configure the Telegram webhook with the Worker URL and matching `secret_token`.
+4. To deliberately enable scheduled workflows in a private GitHub repository, set the repository variable `ENABLE_LIVE_WORKFLOWS` to `true`, set `PORTFOLIO_API_URL` as a repository variable, and add the `PORTFOLIO_API_TOKEN`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `GEMINI_API_KEY` repository secrets. The Cloudflare and GitHub `PORTFOLIO_API_TOKEN` values must match.
+
+If real portfolio data was committed before this public example was prepared, deleting the file in a later commit does not remove it from Git history. Treat previously published private data as exposed and review the repository history separately.
+
+Portfolio price reports show the Yahoo Finance closing-price date. Data older than seven calendar days is marked with a stale-price warning.

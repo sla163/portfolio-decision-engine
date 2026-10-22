@@ -1,7 +1,7 @@
 from portfolio_manager import (
-    format_ticker,
+    _format_price_date,
     get_holdings,
-    get_live_price,
+    get_live_price_with_date,
     get_live_usdtry,
 )
 
@@ -31,7 +31,7 @@ def calculate_portfolio_pnl() -> str:
             satirlar.append(f"💵 `{sembol}`: {adet:,.2f} {para} (Nakit)")
             continue
 
-        guncel_fiyat = get_live_price(sembol, sinif)
+        guncel_fiyat, fiyat_tarihi = get_live_price_with_date(sembol, sinif)
         varlik_maliyet = adet * maliyet
         varlik_guncel = adet * guncel_fiyat
         kar_zarar_tutari = varlik_guncel - varlik_maliyet
@@ -43,9 +43,13 @@ def calculate_portfolio_pnl() -> str:
 
         isaret = "🟢 +" if kar_zarar_tutari >= 0 else "🔴 "
         satirlar.append(
-            f"*{sembol}* ({adet} ad. @ {maliyet:.2f} {para}) -> Son: `{guncel_fiyat:.2f} {para}`\n"
+            f"*{sembol}* ({adet} ad. @ {maliyet:.2f} {para}) -> "
+            f"Son: `{guncel_fiyat:.2f} {para}` ({fiyat_tarihi.isoformat()})\n"
             f"   └ Fark: {isaret}{kar_zarar_tutari:,.2f} {para} (%{kar_orani:+.1f})"
         )
+        price_date_line = _format_price_date(sembol, fiyat_tarihi)
+        if "UYARI:" in price_date_line:
+            satirlar.append(price_date_line)
 
     toplam_fark_try = toplam_guncel_try - toplam_maliyet_try
     toplam_oran = ((toplam_guncel_try / toplam_maliyet_try) - 1) * 100 if toplam_maliyet_try > 0 else 0

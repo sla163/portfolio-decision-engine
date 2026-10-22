@@ -8,6 +8,7 @@ on:
 
 jobs:
   run-bot:
+    if: ${{ vars.ENABLE_LIVE_WORKFLOWS == 'true' }}
     runs-on: ubuntu-latest
 
     steps:

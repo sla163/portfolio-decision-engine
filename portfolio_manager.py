@@ -1,9 +1,12 @@
 import os
 import xml.etree.ElementTree as ET
+from datetime import date, datetime, timedelta, timezone
 
 import requests
 import yaml
 import yfinance as yf
+
+PRICE_STALE_AFTER_DAYS = 7
 
 
 def get_live_usdtry() -> float:
@@ -50,20 +53,34 @@ def format_ticker(symbol: str, sinif: str) -> str | None:
     return ticker
 
 
-def get_live_price(symbol: str, sinif: str) -> float:
-    """Varlığın son kapanış fiyatını alır; fiyat alınamaması açıkça bildirilir."""
+def get_live_price_with_date(symbol: str, sinif: str) -> tuple[float, date]:
+    """Varlığın son kapanış fiyatını ve işlem tarihini döndürür."""
     ticker = format_ticker(symbol, sinif)
     if ticker is None:
         raise ValueError(f"Nakit varlık için piyasa fiyatı istenemez: {symbol}")
 
     try:
-        history = yf.Ticker(ticker).history(period="5d")
+        history = yf.Ticker(ticker).history(period="1mo")
         close_prices = history["Close"].dropna()
         if not close_prices.empty:
-            return float(close_prices.iloc[-1])
+            return float(close_prices.iloc[-1]), close_prices.index[-1].date()
     except Exception as e:
         raise RuntimeError(f"{symbol} ({ticker}) fiyatı alınamadı: {e}") from e
     raise RuntimeError(f"{symbol} ({ticker}) için son 5 günde fiyat verisi bulunamadı.")
+
+
+def get_live_price(symbol: str, sinif: str) -> float:
+    """Varlığın son kapanış fiyatını alır."""
+    price, _ = get_live_price_with_date(symbol, sinif)
+    return price
+
+
+def _format_price_date(symbol: str, price_date: date) -> str:
+    line = f"- {symbol}: {price_date.isoformat()}"
+    today = datetime.now(timezone.utc).date()
+    if today - price_date > timedelta(days=PRICE_STALE_AFTER_DAYS):
+        return f"{line} (UYARI: fiyat verisi {PRICE_STALE_AFTER_DAYS} günden eski)"
+    return line
 
 
 def get_holdings() -> list:
@@ -103,7 +120,7 @@ def get_holdings() -> list:
     return []
 
 
-def _get_holding_value(item: dict, usd_try: float) -> tuple[str, float]:
+def _get_holding_value(item: dict, usd_try: float) -> tuple[str, float, date | None]:
     sinif = item.get("sinif", "diger")
     sembol = item.get("sembol", "")
     adet = float(item.get("adet", 0))
@@ -111,12 +128,14 @@ def _get_holding_value(item: dict, usd_try: float) -> tuple[str, float]:
 
     if sembol.upper().startswith("NAKIT"):
         value = adet
+        price_date = None
     else:
-        value = adet * get_live_price(sembol, sinif)
+        price, price_date = get_live_price_with_date(sembol, sinif)
+        value = adet * price
 
     if para == "USD":
         value *= usd_try
-    return sinif, value
+    return sinif, value, price_date
 
 
 def _load_constraints() -> dict:
@@ -135,11 +154,14 @@ def get_portfolio_summary() -> str:
 
     sinif_toplamlari = {}
     toplam_portfoy = 0.0
+    price_dates = []
 
     for item in holdings:
-        sinif, tutar = _get_holding_value(item, usd_try_kuru)
+        sinif, tutar, price_date = _get_holding_value(item, usd_try_kuru)
         sinif_toplamlari[sinif] = sinif_toplamlari.get(sinif, 0.0) + tutar
         toplam_portfoy += tutar
+        if price_date:
+            price_dates.append((item.get("sembol", ""), price_date))
 
     ozet_satirlari = [
         f"KULLANICININ GÜNCEL PORTFÖY SAPMALARI (USD/TRY: {usd_try_kuru:.2f}):"
@@ -162,6 +184,13 @@ def get_portfolio_summary() -> str:
                 f"- {sinif}: Hedef %{hedef_yuzde} | Fiili %{fiili_yuzde} ({durum})"
             )
 
+    if price_dates:
+        ozet_satirlari.append("Son kapanış fiyatı tarihleri:")
+        ozet_satirlari.extend(
+            _format_price_date(symbol, price_date)
+            for symbol, price_date in price_dates
+        )
+
     return "\n".join(ozet_satirlari)
 
 
@@ -178,7 +207,7 @@ def get_rebalancing_recommendations() -> str:
     toplam_portfoy = 0.0
 
     for item in holdings:
-        sinif, tutar = _get_holding_value(item, usd_try)
+        sinif, tutar, _ = _get_holding_value(item, usd_try)
         sinif_degerleri[sinif] = sinif_degerleri.get(sinif, 0.0) + tutar
         toplam_portfoy += tutar
 

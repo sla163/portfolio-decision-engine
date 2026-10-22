@@ -1,4 +1,5 @@
 import unittest
+from datetime import date
 from unittest.mock import patch
 
 import pandas as pd
@@ -27,14 +28,37 @@ class PortfolioManagerTests(unittest.TestCase):
 
     @patch("portfolio_manager.yf.Ticker")
     def test_get_live_price_uses_recent_close_and_class_formatting(self, ticker):
-        ticker.return_value.history.return_value = pd.DataFrame({"Close": [12.5]})
+        ticker.return_value.history.return_value = pd.DataFrame(
+            {"Close": [12.5]},
+            index=pd.to_datetime(["2026-10-22"]),
+        )
 
         self.assertEqual(portfolio_manager.get_live_price("AVPT", "abd_hisse_etf"), 12.5)
         ticker.assert_called_once_with("AVPT")
-        ticker.return_value.history.assert_called_once_with(period="5d")
+        ticker.return_value.history.assert_called_once_with(period="1mo")
+
+    @patch("portfolio_manager.yf.Ticker")
+    def test_get_live_price_with_date_returns_market_date(self, ticker):
+        ticker.return_value.history.return_value = pd.DataFrame(
+            {"Close": [12.5]},
+            index=pd.to_datetime(["2026-10-22"]),
+        )
+
+        self.assertEqual(
+            portfolio_manager.get_live_price_with_date("AVPT", "abd_hisse_etf"),
+            (12.5, date(2026, 10, 22)),
+        )
+
+    def test_old_price_date_is_marked_stale(self):
+        old_date = date(2020, 1, 1)
+
+        self.assertIn("UYARI:", portfolio_manager._format_price_date("AVPT", old_date))
 
     @patch("portfolio_manager.get_live_usdtry", return_value=10)
-    @patch("portfolio_manager.get_live_price", side_effect=lambda symbol, _: {"ASELS": 20, "AVPT": 5}[symbol])
+    @patch(
+        "portfolio_manager.get_live_price_with_date",
+        side_effect=lambda symbol, _: ({"ASELS": 20, "AVPT": 5}[symbol], date(2026, 10, 22)),
+    )
     @patch("portfolio_manager._load_constraints", return_value={"siniflar": {"bist_katilim": {"hedef": 25}}})
     @patch(
         "portfolio_manager.get_holdings",
@@ -45,13 +69,14 @@ class PortfolioManagerTests(unittest.TestCase):
         ],
     )
     def test_portfolio_summary_uses_market_values_and_currency_conversion(
-        self, get_holdings, load_constraints, get_live_price, get_live_usdtry
+        self, get_holdings, load_constraints, get_live_price_with_date, get_live_usdtry
     ):
         summary = portfolio_manager.get_portfolio_summary()
 
         self.assertIn("bist_katilim: Hedef %25 | Fiili %36.4", summary)
-        get_live_price.assert_any_call("ASELS", "bist_katilim")
-        get_live_price.assert_any_call("AVPT", "abd_hisse_etf")
+        get_live_price_with_date.assert_any_call("ASELS", "bist_katilim")
+        get_live_price_with_date.assert_any_call("AVPT", "abd_hisse_etf")
+        self.assertIn("ASELS: 2026-10-22", summary)
 
     @patch("portfolio_manager.requests.get", side_effect=RuntimeError("unavailable"))
     def test_exchange_rate_failure_is_not_replaced_by_a_fixed_rate(self, get):
